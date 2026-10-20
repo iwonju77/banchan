@@ -14,8 +14,8 @@ async function main() {
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     throw new Error("Set a valid ADMIN_BOOTSTRAP_EMAIL in the environment.");
   }
-  if (!password || password.length < 16) {
-    throw new Error("ADMIN_BOOTSTRAP_PASSWORD must contain at least 16 characters.");
+  if (!password || password.length < 6) {
+    throw new Error("ADMIN_BOOTSTRAP_PASSWORD must contain at least 6 characters.");
   }
 
   const prisma = getPrismaClient();

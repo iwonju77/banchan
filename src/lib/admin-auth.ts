@@ -23,7 +23,7 @@ export function createAdminAuth() {
       enabled: true,
       disableSignUp: true,
       requireEmailVerification: false,
-      minPasswordLength: 16,
+      minPasswordLength: 6,
     },
     user: { modelName: "adminUser" },
     session: {
