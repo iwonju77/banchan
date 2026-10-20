@@ -48,6 +48,13 @@ unavailable, and never exposes connection details or database errors.
   and `ADMIN_BOOTSTRAP_PASSWORD` in the process environment and a non-production
   `DATABASE_URL`. Remove those temporary values after creation, then sign in at
   `/admin/login` and enroll TOTP at `/admin/setup` before accessing `/admin`.
+- There is no email-based administrator password reset. For a forgotten password,
+  run `npm run admin:reset-password` locally with temporary
+  `ADMIN_RESET_EMAIL` and `ADMIN_RESET_PASSWORD` process variables and a
+  `DATABASE_URL` for the Preview database. The command displays the database
+  host and requires an exact confirmation before changing the password hash;
+  it revokes existing sessions and preserves TOTP and recovery codes. Never use
+  the Production database for this command or put credentials in Git or chat.
 - `LINE_LOGIN_ENABLED` remains `false` by default. Enable it only in the
   isolated non-production environment after setting LINE channel credentials
   and registering `https://<preview-host>/api/auth/callback/line` in the LINE
@@ -56,7 +63,9 @@ unavailable, and never exposes connection details or database errors.
   Set `AUTH_URL` to the exact environment origin. Never reuse production secrets
   or the production database in Preview or Development.
 - Prisma uses `DATABASE_URL` for application queries and
-  `DATABASE_URL_UNPOOLED` for migrations. Vercel Preview builds apply checked-in
+  `DATABASE_URL_UNPOOLED` for migrations. Both must target the same Preview
+  Neon database; Preview builds validate the endpoint before migration. Vercel
+  Preview builds apply checked-in
   migrations only when the direct non-production URL is configured; otherwise
   deployment continues with authentication and consent unavailable until the
   migration is applied. Local migrations use `npm run db:migrate:dev`.
