@@ -52,8 +52,9 @@ unavailable, and never exposes connection details or database errors.
   run `npm run admin:reset-password` locally with temporary
   `ADMIN_RESET_EMAIL` and `ADMIN_RESET_PASSWORD` process variables and a
   `DATABASE_URL` for the Preview database. The command displays the database
-  host and requires an exact confirmation before changing the password hash;
-  it revokes existing sessions and preserves TOTP and recovery codes. Never use
+  host and requires an exact confirmation before repairing the credential link
+  and changing the password hash; it revokes existing sessions and preserves
+  TOTP and recovery codes. Never use
   the Production database for this command or put credentials in Git or chat.
 - `LINE_LOGIN_ENABLED` remains `false` by default. Enable it only in the
   isolated non-production environment after setting LINE channel credentials

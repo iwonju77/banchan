@@ -32,7 +32,7 @@ async function main() {
     await transaction.adminAccount.create({
       data: {
         id: randomUUID(),
-        accountId: email,
+        accountId: user.id,
         providerId: "credential",
         userId: user.id,
         password: passwordHash,

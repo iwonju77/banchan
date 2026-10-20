@@ -55,20 +55,23 @@ async function main() {
       throw new Error("No administrator exists with that email in this database.");
     }
 
-    const account = await prisma.adminAccount.findFirst({
-      where: { userId: user.id, accountId: email, providerId: "credential" },
+    const accounts = await prisma.adminAccount.findMany({
+      where: { userId: user.id, providerId: "credential" },
       select: { id: true },
     });
-    if (!account) {
+    if (accounts.length === 0) {
       throw new Error("No credential account exists for this administrator.");
+    }
+    if (accounts.length > 1) {
+      throw new Error("Multiple credential accounts found; no changes were made.");
     }
 
     const passwordHash = await hashPassword(password);
     let revokedSessions = 0;
     await prisma.$transaction(async (transaction) => {
       await transaction.adminAccount.update({
-        where: { id: account.id },
-        data: { password: passwordHash },
+        where: { id: accounts[0].id },
+        data: { accountId: user.id, password: passwordHash },
       });
       const result = await transaction.adminSession.deleteMany({
         where: { userId: user.id },
@@ -85,7 +88,7 @@ async function main() {
     });
 
     console.info(
-      `Administrator password reset. Revoked ${revokedSessions} session(s); TOTP and recovery codes were preserved.`,
+      `Administrator credentials repaired and password reset. Revoked ${revokedSessions} session(s); TOTP and recovery codes were preserved.`,
     );
   } finally {
     await prisma.$disconnect();
