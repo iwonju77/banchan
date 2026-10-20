@@ -17,8 +17,8 @@ npm run dev
 
 `.env.example` contains placeholders only. Do not put real secrets in Git,
 client-side code, logs, or prompts. LINE login, online payment, and shipping
-integrations are disabled by default. No live database or external service is
-required for this foundation phase.
+integrations are disabled by default. The owner selected Neon for non-production
+database use; production database access is not configured here.
 
 ## Verification
 
@@ -30,47 +30,31 @@ npm run build
 ```
 
 GitHub Actions runs the same checks for pull requests and pushes to `main`.
-`GET /api/health` is a liveness endpoint only; it does not claim that a database
-or external dependency is available.
+`GET /api/health` is a liveness endpoint. `GET /api/ready` runs a minimal
+`SELECT 1` against `DATABASE_URL`, returns `503` when it is unset or unavailable,
+and never exposes connection details or database errors.
 
 ## Environment and deployment plan
 
 - Local development uses `.env.local` with local-only credentials.
-- Preview deployments use non-production Vercel environment variables and a
-  dedicated non-production database after a provider is selected.
+- Preview and Development use the owner-managed non-production Neon database;
+  Production must not use those credentials.
 - Production credentials and database must remain separate from Preview and
-  Development. Production deployment and live integrations are not enabled by
-  this phase.
-- The project has not been linked to a Vercel account or deployed. Configure
-  Preview deployments only after the repository is connected to the owner’s
-  GitHub/Vercel accounts; do not copy production variables into Preview.
-- Managed PostgreSQL provider selection and provisioning remain pending a
-  documented comparison (including pooling, backups, region, cost, and
-  connection limits). No production database credentials have been accessed.
+  Development. The Phase 1 foundation is deployed on Vercel; it is not a
+  customer-ready storefront.
+- A new deployment is required after changing environment variables. Validate
+  database access on Preview with `/api/ready`; do not rely on the liveness
+  endpoint for database status.
 
-### Initial PostgreSQL provider comparison
+### Database provider
 
-- **Neon (provisional preference):** its current Prisma guide uses a pooled
-  application URL and a separate direct URL for migrations. This fits a
-  Vercel-hosted, Prisma-backed app without requiring us to adopt a second auth
-  or API layer. Confirm region, plan limits, backups, preview-branch behavior,
-  and pricing before creating an account/project.
-- **Supabase:** supports Prisma and documents separate session/direct and
-  transaction-pooler connection modes for serverless use. Its Data API and
-  other bundled services are optional; this project does not need to expose a
-  client-side database API for the planned server-owned access model.
-- **Vercel Postgres:** the former first-party product is no longer available
-  for new projects; use a Marketplace provider instead. Do not add the
-  deprecated `@vercel/postgres` package.
+Neon is selected for PostgreSQL. Use its pooled connection string for
+serverless application queries and a separate direct connection only for
+migrations. Do not use the deprecated `@vercel/postgres` package. See the
+[Neon Prisma guide](https://neon.com/docs/guides/prisma) and
+[Vercel Postgres documentation](https://vercel.com/docs/postgres).
 
-References: [Neon Prisma guide](https://neon.com/docs/guides/prisma),
-[Supabase Prisma guide](https://supabase.com/docs/guides/database/prisma),
-[Vercel Postgres documentation](https://vercel.com/docs/postgres). Neon is a
-recommendation for evaluation, not a selected or provisioned production
-provider. Provider selection and account setup require owner review of current
-commercial terms and Taiwan-region latency/availability.
-
-## Phase-one directory conventions
+## Project conventions
 
 - `src/app/`: App Router routes and layouts.
 - `src/app/api/`: HTTP route handlers; validate all untrusted input server-side.
