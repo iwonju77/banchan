@@ -57,9 +57,9 @@ unavailable, and never exposes connection details or database errors.
   or the production database in Preview or Development.
 - Prisma uses `DATABASE_URL` for application queries and
   `DATABASE_URL_UNPOOLED` for migrations. Vercel Preview builds apply checked-in
-  migrations only to the configured Preview database; configure the direct
-  non-production URL before deploying this phase. Local migrations use
-  `npm run db:migrate:dev`.
+  migrations only when the direct non-production URL is configured; otherwise
+  deployment continues with authentication and consent unavailable until the
+  migration is applied. Local migrations use `npm run db:migrate:dev`.
 - Consent policies are versioned by type and version with a stored document
   hash; acceptance records refer to the exact policy version. The store must
   not record customer consent until approved terms and privacy policies are

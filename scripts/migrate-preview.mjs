@@ -5,9 +5,10 @@ if (process.env.VERCEL_ENV !== "preview") {
 }
 
 if (!process.env.DATABASE_URL_UNPOOLED) {
-  throw new Error(
-    "DATABASE_URL_UNPOOLED must be configured for the isolated Preview database before migrations can run.",
+  console.warn(
+    "Skipping Preview migrations: DATABASE_URL_UNPOOLED is unset. Authentication and consent remain unavailable until the migration is applied.",
   );
+  process.exit(0);
 }
 
 execFileSync("npx", ["prisma", "migrate", "deploy"], {
