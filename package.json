@@ -4,25 +4,39 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
-    "test": "node --test",
-    "build": "next build",
+    "test": "node --import tsx --test",
+    "build": "prisma generate && node scripts/migrate-preview.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.2.0",
+    "@auth/prisma-adapter": "^2.11.3",
+    "@better-auth/prisma-adapter": "^1.7.11",
+    "@prisma/adapter-neon": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "better-auth": "^1.7.11",
     "next": "16.4.2",
+    "next-auth": "^5.0.0-beta.32",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.8",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

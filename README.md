@@ -31,8 +31,39 @@ npm run build
 
 GitHub Actions runs the same checks for pull requests and pushes to `main`.
 `GET /api/health` is a liveness endpoint. `GET /api/ready` runs a minimal
-`SELECT 1` against `DATABASE_URL`, returns `503` when it is unset or unavailable,
-and never exposes connection details or database errors.
+`SELECT 1` through Prisma and `DATABASE_URL`, returns `503` when it is unset or
+unavailable, and never exposes connection details or database errors.
+
+## Phase 2 identity boundaries
+
+- Customer authentication uses LINE OIDC through Auth.js and database-backed
+  sessions. The provider requests only `openid profile`; it does not request
+  LINE email permission. Logout invalidates the local session and attempts to
+  revoke the LINE access token.
+- Administrator authentication uses a separate Better Auth instance, tables,
+  and cookie namespace. TOTP and recovery codes are required for administrator
+  access; customer credentials cannot authenticate as administrators.
+- Public administrator sign-up is disabled. Create the first administrator
+  once with `npm run admin:create`, using a temporary `ADMIN_BOOTSTRAP_EMAIL`
+  and `ADMIN_BOOTSTRAP_PASSWORD` in the process environment and a non-production
+  `DATABASE_URL`. Remove those temporary values after creation, then sign in at
+  `/admin/login` and enroll TOTP at `/admin/setup` before accessing `/admin`.
+- `LINE_LOGIN_ENABLED` remains `false` by default. Enable it only in the
+  isolated non-production environment after setting LINE channel credentials
+  and registering `https://<preview-host>/api/auth/callback/line` in the LINE
+  Login channel. Do not use the LINE Pay store ID as a Login channel ID.
+- Configure distinct `CUSTOMER_AUTH_SECRET` and `ADMIN_AUTH_SECRET` values.
+  Set `AUTH_URL` to the exact environment origin. Never reuse production secrets
+  or the production database in Preview or Development.
+- Prisma uses `DATABASE_URL` for application queries and
+  `DATABASE_URL_UNPOOLED` for migrations. Vercel Preview builds apply checked-in
+  migrations only to the configured Preview database; configure the direct
+  non-production URL before deploying this phase. Local migrations use
+  `npm run db:migrate:dev`.
+- Consent policies are versioned by type and version with a stored document
+  hash; acceptance records refer to the exact policy version. The store must
+  not record customer consent until approved terms and privacy policies are
+  published in the database.
 
 ## Environment and deployment plan
 

@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Auth.js customer identity tables. LINE is the only configured provider.
+model User {
+  id            String            @id @default(cuid())
+  name          String?
+  email         String?           @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  consents      CustomerConsent[]
+
+  @@map("Customer")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("LineIdentity")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("CustomerSession")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("CustomerVerification")
+}
+
+// Better Auth administrator identity tables. Never shared with customers.
+model AdminUser {
+  id               String          @id @default(cuid())
+  name             String
+  email            String          @unique
+  emailVerified    Boolean         @default(false)
+  image            String?
+  twoFactorEnabled Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  sessions         AdminSession[]
+  accounts         AdminAccount[]
+  twoFactor        AdminTwoFactor?
+
+  @@map("AdminUser")
+}
+
+model AdminSession {
+  id        String    @id
+  expiresAt DateTime
+  token     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("AdminSession")
+}
+
+model AdminAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("AdminAccount")
+}
+
+model AdminVerification {
+  id         String   @id
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("AdminVerification")
+}
+
+model AdminTwoFactor {
+  id                      String    @id
+  secret                  String    @db.Text
+  backupCodes             String    @db.Text
+  userId                  String    @unique
+  verified                Boolean   @default(false)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+  user                    AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("AdminTwoFactor")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorType  String
+  actorId    String?
+  action     String
+  targetType String?
+  targetId   String?
+  occurredAt DateTime @default(now())
+
+  @@index([actorType, actorId, occurredAt])
+  @@index([action, occurredAt])
+  @@map("AuditLog")
+}
+
+model ConsentPolicy {
+  id           String            @id @default(cuid())
+  policyType   String
+  version      String
+  documentHash String
+  effectiveAt  DateTime
+  retiredAt    DateTime?
+  createdAt    DateTime          @default(now())
+  consents     CustomerConsent[]
+
+  @@unique([policyType, version])
+  @@index([policyType, effectiveAt])
+  @@map("ConsentPolicy")
+}
+
+model CustomerConsent {
+  id         String        @id @default(cuid())
+  customerId String
+  policyId   String
+  acceptedAt DateTime      @default(now())
+  revokedAt  DateTime?
+  customer   User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  policy     ConsentPolicy @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, acceptedAt])
+  @@index([policyId])
+  @@map("CustomerConsent")
+}

@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { getPrismaClient } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const pathname = new URL(request.url).pathname;
@@ -13,8 +13,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const sql = neon(databaseUrl);
-    const [result] = await sql`SELECT 1 AS ok`;
+    const prisma = getPrismaClient();
+    const [result] = await prisma.$queryRaw<{ ok: number }[]>`SELECT 1 AS ok`;
 
     if (Number(result?.ok) !== 1) {
       throw new Error("Unexpected database readiness result");
